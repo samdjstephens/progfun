@@ -65,7 +65,9 @@ abstract class TweetSet {
     * Question: Should we implment this method here, or should it remain abstract
     * and be implemented in the subclasses?
     */
-  def mostRetweeted: Tweet = ???
+  def mostRetweeted: Tweet
+
+  def isEmpty: Boolean
 
   /**
     * Returns a list containing all tweets of this set, sorted by retweet count
@@ -111,6 +113,12 @@ class Empty extends TweetSet {
   def filter(p: (Tweet) => Boolean): TweetSet = this
   def filterAcc(p: Tweet => Boolean, acc: TweetSet): TweetSet = acc
 
+  def mostRetweeted: Null = {
+    throw new NoSuchElementException
+  }
+
+  def isEmpty: Boolean = true
+
   /**
     * The following methods are already implemented
     */
@@ -133,6 +141,7 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     *
     * Moved down to concrete classes as abstract class shouldn't
     * have knowledge of concrete classes (i.e. Empty class)
+    *
     * @param p Predicate function
     * @return TweetSet including all element where p(tweet) is True
     */
@@ -149,6 +158,16 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
   def union(that: TweetSet): TweetSet = {
     ((left union right) union that).incl(elem)
   }
+
+  def mostRetweeted: Tweet = {
+    val allTweets = left union right
+    if (allTweets.isEmpty || elem.retweets > allTweets.mostRetweeted.retweets) {
+      elem
+    } else
+      allTweets.mostRetweeted
+  }
+
+  def isEmpty: Boolean = false
     
   /**
    * The following methods are already implemented
