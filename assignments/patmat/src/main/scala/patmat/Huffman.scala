@@ -26,7 +26,7 @@ object Huffman {
 
 
   // Part 1: Basics
-  def weight(tree: CodeTree): Int = tree match {
+  def weight[T >: CodeTree](tree: T): Int = tree match {
     case Fork(_, _, _, weight) => weight
     case Leaf(_, weight) => weight
   }
@@ -90,6 +90,13 @@ object Huffman {
     listRecur(chars, List())
   }
 
+  def insertNewTreeEl[T](el: T, list: List[T]): List[T] = list match {
+    case Nil => List(el)
+    case existingEl :: rest =>
+      if (weight(el) <= weight(existingEl)) el :: existingEl :: rest
+      else existingEl :: insertNewTreeEl(el, rest)
+  }
+
   /**
     * Returns a list of `Leaf` nodes for a given frequency table `freqs`.
     *
@@ -100,14 +107,7 @@ object Huffman {
   def makeOrderedLeafList(freqs: List[(Char, Int)]): List[Leaf] = {
     def listRecur(freqs: List[(Char, Int)], leaves: List[Leaf]): List[Leaf] = {
       if (freqs.isEmpty) leaves
-      else listRecur(freqs.tail, insertNewLeaf(freqs.head._1, freqs.head._2, leaves))
-    }
-
-    def insertNewLeaf(char: Char, weight: Int, list: List[Leaf]): List[Leaf] = list match {
-      case Nil => List(Leaf(char, weight))
-      case Leaf(c, w) :: rest =>
-        if (weight <= w) Leaf(char, weight) :: Leaf(c, w) :: rest
-        else Leaf(c, w) :: insertNewLeaf(char, weight, rest)
+      else listRecur(freqs.tail, insertNewTreeEl(Leaf(freqs.head._1, freqs.head._2), leaves))
     }
 
     listRecur(freqs, List())
@@ -116,7 +116,10 @@ object Huffman {
   /**
     * Checks whether the list `trees` contains only one single code tree.
     */
-  def singleton(trees: List[CodeTree]): Boolean = ???
+  def singleton(trees: List[CodeTree]): Boolean = trees match {
+    case t :: Nil => true
+    case _ => false
+  }
 
   /**
     * The parameter `trees` of this function is a list of code trees ordered
@@ -130,7 +133,15 @@ object Huffman {
     * If `trees` is a list of less than two elements, that list should be returned
     * unchanged.
     */
-  def combine(trees: List[CodeTree]): List[CodeTree] = ???
+  def combine(trees: List[CodeTree]): List[CodeTree] = trees match {
+    case Nil => throw new NoSuchElementException("No trees in list")
+    case el :: Nil => List(el)
+    case el1 :: el2 :: rest =>
+      insertNewTreeEl(
+        Fork(el1, el2, chars(el1) ::: chars(el2), weight(el1) + weight(el2)),
+        rest
+      )
+  }
 
   /**
     * This function will be called in the following way:
@@ -149,7 +160,7 @@ object Huffman {
     * the example invocation. Also define the return type of the `until` function.
     *  - try to find sensible parameter names for `xxx`, `yyy` and `zzz`.
     */
-  def until(xxx: ???, yyy: ???)(zzz: ???): ??? = ???
+  def until(predicate: List[CodeTree] => Boolean, yyy: ???)(zzz: ???): ??? = ???
 
   /**
     * This function creates a code tree which is optimal to encode the text `chars`.
