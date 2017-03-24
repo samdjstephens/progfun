@@ -160,7 +160,10 @@ object Huffman {
     * the example invocation. Also define the return type of the `until` function.
     *  - try to find sensible parameter names for `xxx`, `yyy` and `zzz`.
     */
-  def until(predicate: List[CodeTree] => Boolean, yyy: ???)(zzz: ???): ??? = ???
+  def until(shouldStop: List[CodeTree] => Boolean, reduce: List[CodeTree] => List[CodeTree])(trees: List[CodeTree]): List[CodeTree] = {
+    if (shouldStop(trees)) trees
+    else until(shouldStop, reduce)(reduce(trees))
+  }
 
   /**
     * This function creates a code tree which is optimal to encode the text `chars`.
@@ -168,7 +171,10 @@ object Huffman {
     * The parameter `chars` is an arbitrary text. This function extracts the character
     * frequencies from that text and creates a code tree based on them.
     */
-  def createCodeTree(chars: List[Char]): CodeTree = ???
+  def createCodeTree(chars: List[Char]): CodeTree = {
+    val leafList = makeOrderedLeafList(times(chars))
+    until(singleton, combine)(leafList).head
+  }
 
 
   // Part 3: Decoding
@@ -179,7 +185,16 @@ object Huffman {
     * This function decodes the bit sequence `bits` using the code tree `tree` and returns
     * the resulting list of characters.
     */
-  def decode(tree: CodeTree, bits: List[Bit]): List[Char] = ???
+  def decode(tree: CodeTree, bits: List[Bit]): List[Char] = {
+    def _decode(curTree: CodeTree, bits: List[Bit], chars: List[Char]): List[Char] = (bits, curTree) match {
+      case (0 :: obits, Fork(ltree, _, _, _)) => _decode(ltree, obits, chars)
+      case (1 :: obits, Fork(_, rtree, _, _)) => _decode(rtree, obits, chars)
+      case (obits, Leaf(c, _)) => _decode(tree, obits, c :: chars)
+      case (Nil, _) => chars
+    }
+    val decoded = _decode(tree, bits, Nil)
+    decoded.reverse
+  }
 
   /**
     * A Huffman coding tree for the French language.
@@ -197,7 +212,7 @@ object Huffman {
   /**
     * Write a function that returns the decoded secret
     */
-  def decodedSecret: List[Char] = ???
+  def decodedSecret: List[Char] = decode(frenchCode, secret)
 
 
   // Part 4a: Encoding using Huffman tree
