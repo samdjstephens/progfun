@@ -26,7 +26,7 @@ object Huffman {
 
 
   // Part 1: Basics
-  def weight[T >: CodeTree](tree: T): Int = tree match {
+  def weight(tree: CodeTree): Int = tree match {
     case Fork(_, _, _, weight) => weight
     case Leaf(_, weight) => weight
   }
@@ -90,7 +90,7 @@ object Huffman {
     listRecur(chars, List())
   }
 
-  def insertNewTreeEl[T](el: T, list: List[T]): List[T] = list match {
+  def insertNewTreeEl[T <: CodeTree](el: T, list: List[T]): List[T] = list match {
     case Nil => List(el)
     case existingEl :: rest =>
       if (weight(el) <= weight(existingEl)) el :: existingEl :: rest
