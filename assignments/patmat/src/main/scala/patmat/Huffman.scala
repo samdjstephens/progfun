@@ -187,10 +187,11 @@ object Huffman {
     */
   def decode(tree: CodeTree, bits: List[Bit]): List[Char] = {
     def _decode(curTree: CodeTree, bits: List[Bit], chars: List[Char]): List[Char] = (bits, curTree) match {
+      case (Nil, Leaf(c, _)) => c :: chars
+      case (Nil, Fork(_, _, _, _)) => throw new Error("Encoded data is corrupt")
       case (0 :: obits, Fork(ltree, _, _, _)) => _decode(ltree, obits, chars)
       case (1 :: obits, Fork(_, rtree, _, _)) => _decode(rtree, obits, chars)
       case (obits, Leaf(c, _)) => _decode(tree, obits, c :: chars)
-      case (Nil, _) => chars
     }
     val decoded = _decode(tree, bits, Nil)
     decoded.reverse
@@ -218,10 +219,23 @@ object Huffman {
   // Part 4a: Encoding using Huffman tree
 
   /**
+    * Helper function for encode
+    */
+  def encodeLetter(letter: Char, tree: CodeTree): List[Bit] = tree match {
+    case Leaf(c, w) => Nil
+    case Fork(ltree, rtree, cs, w) =>
+      if (chars(ltree) contains letter) 0 :: encodeLetter(letter, ltree)
+      else if (chars(rtree) contains letter) 1 :: encodeLetter(letter, rtree)
+      else throw new Error(s"CodeTree does not contain character: $letter")
+  }
+  /**
     * This function encodes `text` using the code tree `tree`
     * into a sequence of bits.
     */
-  def encode(tree: CodeTree)(text: List[Char]): List[Bit] = ???
+  def encode(tree: CodeTree)(text: List[Char]): List[Bit] = {
+    if (text.isEmpty) Nil
+    else encodeLetter(text.head, tree) ::: encode(tree)(text.tail)
+  }
 
   // Part 4b: Encoding using code table
 
