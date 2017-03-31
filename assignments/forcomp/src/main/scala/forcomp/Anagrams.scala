@@ -100,6 +100,7 @@ object Anagrams {
 
   def subtractSingle(char: Char, count: Int, occurrences: Occurrences): Occurrences = {
     val asMap = occurrences.toMap
+    if (!(asMap contains char)) throw new NoSuchElementException(occurrences + " does not contain " + char)
     ((asMap updated (char, asMap(char) - count) filter { case (_, i) => i > 0 }) toList) sorted
   }
 
@@ -159,13 +160,13 @@ object Anagrams {
    */
   def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
     def iter(occurrences: Occurrences): List[Sentence] = {
-      if (occurrences.isEmpty) List()
+      if (occurrences.isEmpty) List(List())
       else {
         for {
           occ <- combinations(sentenceOccurrences(sentence))
+          word <- dictionaryByOccurrences(occ)
           sentence <- iter(subtract(occurrences, occ))
-          if dictionaryByOccurrences contains occ
-        } yield dictionaryByOccurrences(occ) :: sentence
+        } yield word :: sentence
       }
     }
     iter(sentenceOccurrences(sentence))
