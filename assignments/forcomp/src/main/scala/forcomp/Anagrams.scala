@@ -163,7 +163,7 @@ object Anagrams {
       if (occurrences.isEmpty) List(List())
       else {
         for {
-          occ <- combinations(sentenceOccurrences(sentence))
+          occ <- combinations(occurrences)
           word <- dictionaryByOccurrences(occ)
           sentence <- iter(subtract(occurrences, occ))
         } yield word :: sentence
