@@ -59,11 +59,11 @@ object Anagrams {
    *
    */
   lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = {
-    dictionary groupBy wordOccurrences
+    dictionary groupBy wordOccurrences withDefaultValue List()
   }
 
   /** Returns all the anagrams of a given word. */
-  def wordAnagrams(word: Word): List[Word] = ???
+  def wordAnagrams(word: Word): List[Word] = dictionaryByOccurrences(wordOccurrences(word))
 
   /** Returns the list of all subsets of the occurrence list.
    *  This includes the occurrence itself, i.e. `List(('k', 1), ('o', 1))`
@@ -87,7 +87,21 @@ object Anagrams {
    *  Note that the order of the occurrence list subsets does not matter -- the subsets
    *  in the example above could have been displayed in some other order.
    */
-  def combinations(occurrences: Occurrences): List[Occurrences] = ???
+  def combinations(occurrences: Occurrences): List[Occurrences] = {
+    def combIter(chars: List[Char]): List[List[Char]] = chars match {
+      case Nil => List(List())
+      case c :: rest =>
+        val restCombs = combIter(rest)
+        restCombs ::: (for (comb <- restCombs) yield c :: comb)
+    }
+    val flattened = occurrences flatMap { case (char, count) => for (_ <- 1 to count) yield char }
+    combIter(flattened) map (_.mkString) map wordOccurrences
+  }
+
+  def subtractSingle(char: Char, count: Int, occurrences: Occurrences): Occurrences = {
+    val asMap = occurrences.toMap
+    ((asMap updated (char, asMap(char) - count) filter { case (_, i) => i > 0 }) toList) sorted
+  }
 
   /** Subtracts occurrence list `y` from occurrence list `x`.
    *
@@ -99,7 +113,9 @@ object Anagrams {
    *  Note: the resulting value is an occurrence - meaning it is sorted
    *  and has no zero-entries.
    */
-  def subtract(x: Occurrences, y: Occurrences): Occurrences = ???
+  def subtract(x: Occurrences, y: Occurrences): Occurrences = {
+    (y foldLeft x)({ case (accum, (c, i)) =>  subtractSingle(c, i, accum)})
+  }
 
   /** Returns a list of all anagram sentences of the given sentence.
    *
